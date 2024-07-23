@@ -2,7 +2,6 @@ dist
 build
 node_modules
 package-lock.json
-yarn.lock
 migrate.sh
 */dev.js
 data/*

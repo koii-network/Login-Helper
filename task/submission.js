@@ -19,7 +19,7 @@ class Submission {
         console.log('Old browser closed');
       }
       const options = {};
-      const userDataDir = path.join(__dirname, 'puppeteer_cache_koii_twitter_archive');
+      const userDataDir = path.join(__dirname, 'puppeteer_cache_twitter_login');
       const stats = await PCR(options);
       console.log(
         '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
@@ -53,6 +53,48 @@ class Submission {
       return false;
     }
   };
+
+  negotiateHeadlessSession = async () => {
+    try {
+      if (this.browserHeadless) {
+        await this.browserHeadless.close();
+        console.log('Old browser closed');
+      }
+      const options = {};
+      const userDataDir = path.join(__dirname, 'puppeteer_cache_twitter_login_headless');
+      const stats = await PCR(options);
+      console.log(
+        '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
+      );
+      this.browserHeadless = await stats.puppeteer.launch({
+        executablePath: stats.executablePath,
+        userDataDir: userDataDir,
+        // headless: false,
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        args: [
+          '--aggressive-cache-discard',
+          '--disable-cache',
+          '--disable-application-cache',
+          '--disable-offline-load-stale-cache',
+          '--disable-gpu-shader-disk-cache',
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-gpu',
+        ],
+      });
+      console.log('Step: Open new page');
+      this.pageHeadless = await this.browserHeadless.newPage();
+      await this.pageHeadless.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      );
+      await this.pageHeadless.setViewport({ width: 1920, height: 1080 });
+      return true;
+    } catch (e) {
+      console.log('Error negotiating session', e);
+      return false;
+    }
+  };
   
   /**
    * Executes your task, optionally storing the result.
@@ -64,12 +106,14 @@ class Submission {
     try {
       console.log('ROUND', round);
       let value; 
-      await this.negotiateSession();
+      
+      await this.negotiateHeadlessSession();
       const isLoggedIn = await this.checkLogin();
       if(isLoggedIn){
         value = true;
         console.log("Login Cookie Exists")
       }else{
+        await this.negotiateSession();
         console.log("No Login Cookie ; Require Manual Login")
         await this.twitterLogin();
       }
@@ -88,26 +132,28 @@ class Submission {
 
   async checkLogin() {  
 
-    const newPage = await this.browser.newPage(); // Create a new page
+    const newPage = await this.browserHeadless.newPage(); // Create a new page
     await newPage.goto('https://x.com/home');
     await newPage.waitForTimeout(5000);
     // Replace the selector with a Twitter-specific element that indicates a logged-in state
     const isLoggedIn =
       (await newPage.url()) !==
       'https://x.com/i/flow/login?redirect_after_login=%2Fhome';
+    let sessionValid = false;
     if (isLoggedIn) {
       console.log('Logged in using existing cookies');
       console.log('Updating last session check');
-      this.sessionValid = true;
-      const cookies = await this.page.cookies();
+      
+      const cookies = await newPage.cookies();
       this.saveCookiesToDB(cookies);
-      this.sessionValid = true;
+
+      sessionValid = true;
     } else {
       console.log('No valid cookies found, proceeding with manual login');
-      this.sessionValid = false;
+      sessionValid = false;
     }
     await newPage.close();
-    return this.sessionValid;
+    return sessionValid;
 
   };
 
