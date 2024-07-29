@@ -121,6 +121,8 @@ class Submission {
       if (value) {
         await namespaceWrapper.storeSet('value', value);
       }
+      await this.browser.close();
+      process.exit(1);
       // Optional, return your task
       return value;
     } catch (err) {
@@ -216,8 +218,7 @@ async twitterLogin() {
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         resolve();
-      }, 30000); 
-
+      }, 150000); 
       this.page.on('close', () => {
         clearTimeout(timeout);
         reject(new Error('Browser was closed by user or system.'));
@@ -237,13 +238,12 @@ async twitterLogin() {
       console.log('No cookies retrieved. Please try again.');
       this.sessionValid = false;
     }
+    return this.sessionValid;
   } catch (error) {
     console.error('Error during Twitter login:', error);
-  
   }
   if(this.sessionValid == true){
     await namespaceWrapper.logMessage("warn", "You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.");
-    process.exit(1);
   }
 }
 
