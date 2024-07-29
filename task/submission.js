@@ -207,6 +207,7 @@ async saveCookiesToDB (cookies) {
 };
 
 async twitterLogin() {
+
   try {
     await this.redirectToTwitterLogin();
     await this.infoMessage();
@@ -236,11 +237,13 @@ async twitterLogin() {
       console.log('No cookies retrieved. Please try again.');
       this.sessionValid = false;
     }
-
-    return this.sessionValid;
   } catch (error) {
     console.error('Error during Twitter login:', error);
-    return false;
+  
+  }
+  if(this.sessionValid == true){
+    await namespaceWrapper.logMessage("warn", "You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.");
+    process.exit(1);
   }
 }
 
