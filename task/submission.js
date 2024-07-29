@@ -215,7 +215,7 @@ async twitterLogin() {
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         resolve();
-      }, 300000); 
+      }, 30000); 
 
       this.page.on('close', () => {
         clearTimeout(timeout);
@@ -254,12 +254,8 @@ async twitterLogin() {
   async submitTask(round) {
     console.log('SUBMIT TASK CALLED ROUND NUMBER', round);
     try {
-      console.log('SUBMIT TASK SLOT', await namespaceWrapper.getSlot());
-      const submission = await this.fetchSubmission(round);
-      console.log('SUBMISSION', submission);
-      await namespaceWrapper.checkSubmissionAndUpdateRound(submission, round);
-      console.log('SUBMISSION CHECKED AND ROUND UPDATED');
-      return submission;
+      console.log("No Submission Required");
+      return true;
     } catch (error) {
       console.log('ERROR IN SUBMISSION', error);
     }

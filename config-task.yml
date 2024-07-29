@@ -14,8 +14,8 @@ task_audit_program: 'dist/main.js'
 
 # round_time: The total duration of your task, measured in slots (with each slot approximately equal to 408ms)
 round_time: 1500
-audit_window: 0
-submission_window: 1500
+audit_window: 500
+submission_window: 900
 
 # minimum_stake_amount: The minimum amount of KOII that a user must stake in order to participate in the task
 minimum_stake_amount: 0.01
@@ -46,7 +46,7 @@ requirementsTags:
 
 # ONLY provide the task_id and migrationDescription if you are updating the task otherwise leave blank
 # task_id: Previous task id
-task_id: ''
+task_id: 'pFTaEuQ8nUzT28i6m9TeFgihMa3rXpdUmaWeXhDgcsW'
 
 # migrationDescription: Provide the description for changes made in new version of task
-migrationDescription: ''
+migrationDescription: 'Updated'

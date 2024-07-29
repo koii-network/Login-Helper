@@ -1,5 +1,6 @@
 const { namespaceWrapper } = require('@_koii/namespace-wrapper');
-
+const path = require('path');
+const Datastore = require('nedb-promises');
 /**
  * Data class
  *
@@ -25,8 +26,13 @@ class Data {
    */
   async initializeData() {
     if (this.db) return;
-    const db = await namespaceWrapper.getDb();
-    this.db = db;
+    const basePath = (await namespaceWrapper.getTaskLevelDBPath()).replace(
+      '/KOIIDB',
+      '',
+    );
+    const parentDir = path.dirname(basePath);
+    const commonDBPath = path.join(parentDir, 'Twitter_Login', 'KOIIDB');
+    this.db = Datastore.create(commonDBPath);    
   }
 
   /**
