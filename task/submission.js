@@ -8,6 +8,7 @@ class Submission {
 
   constructor() {
     this.browser = null;
+    this.browserHeadless = null;
     this.w3sKey = null;
     this.db = new Data('db', []);
     this.db.initializeData();
@@ -69,7 +70,7 @@ class Submission {
       this.browserHeadless = await stats.puppeteer.launch({
         executablePath: stats.executablePath,
         userDataDir: userDataDir,
-        headless: false,
+        //headless: false,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         args: [
@@ -108,7 +109,6 @@ class Submission {
       await this.negotiateHeadlessSession();
       const isLoggedIn = await this.checkLogin();
       if(isLoggedIn){
-        value = true;
         console.log("Login Cookie Exists")
         await namespaceWrapper.logMessage("warn", "Login Cookie Exists. You can start all the other Twitter Tasks.");
       }else{
@@ -269,10 +269,6 @@ async twitterLogin() {
    */
   async fetchSubmission(round) {
     console.log('FETCH SUBMISSION');
-    // Fetch the value from NeDB
-    const value = await namespaceWrapper.storeGet('value'); // retrieves the value
-    // Return cid/value, etc.
-    return value;
   }
 }
 const submission = new Submission();
