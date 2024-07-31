@@ -105,26 +105,26 @@ class Submission {
   async task(round) {
     try {
       console.log('ROUND', round);
-      let value; 
-      
       await this.negotiateHeadlessSession();
       const isLoggedIn = await this.checkLogin();
       if(isLoggedIn){
         value = true;
         console.log("Login Cookie Exists")
+        await namespaceWrapper.logMessage("warn", "Login Cookie Exists. You can start all the other Twitter Tasks.");
       }else{
         await this.negotiateSession();
         console.log("No Login Cookie ; Require Manual Login")
-        await this.twitterLogin();
-      }
-      // Store the result in NeDB (optional)
-      if (value) {
-        await namespaceWrapper.storeSet('value', value);
+        const loginResult = await this.twitterLogin();
+        if(loginResult){
+          await namespaceWrapper.logMessage("warn", "You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.");
+        }else{
+          await namespaceWrapper.logMessage("warn", "The Login Failed! Contact Discord Support for more information!");
+        }
       }
       await this.browser.close();
       process.exit(1);
       // Optional, return your task
-      return value;
+    
     } catch (err) {
       console.log('ERROR IN EXECUTING TASK', err);
       return 'ERROR IN EXECUTING TASK' + err;
@@ -241,9 +241,6 @@ async twitterLogin() {
     return this.sessionValid;
   } catch (error) {
     console.error('Error during Twitter login:', error);
-  }
-  if(this.sessionValid == true){
-    await namespaceWrapper.logMessage("warn", "You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.");
   }
 }
 
