@@ -5,7 +5,6 @@ const path = require('path');
 const Data = require('../helper/data');
 
 class Submission {
-
   constructor() {
     this.browser = null;
     this.browserHeadless = null;
@@ -20,7 +19,7 @@ class Submission {
         console.log('Old browser closed');
       }
       const options = {};
-      const userDataDir = path.join(__dirname, 'puppeteer_cache_twitter_login');
+      const userDataDir = path.join(__dirname, 'puppeteer_cache');
       const stats = await PCR(options);
       console.log(
         '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
@@ -31,16 +30,7 @@ class Submission {
         headless: false,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        args: [
-          '--aggressive-cache-discard',
-          '--disable-cache',
-          '--disable-application-cache',
-          '--disable-offline-load-stale-cache',
-          '--disable-gpu-shader-disk-cache',
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-gpu',
-        ],
+        args: ['--no-sandbox'],
       });
       console.log('Step: Open new page');
       this.page = await this.browser.newPage();
@@ -62,7 +52,7 @@ class Submission {
         console.log('Old browser closed');
       }
       const options = {};
-      const userDataDir = path.join(__dirname, 'puppeteer_cache_twitter_login_headless');
+      const userDataDir = path.join(__dirname, 'puppeteer_cache');
       const stats = await PCR(options);
       console.log(
         '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
@@ -73,16 +63,7 @@ class Submission {
         //headless: false,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        args: [
-          '--aggressive-cache-discard',
-          '--disable-cache',
-          '--disable-application-cache',
-          '--disable-offline-load-stale-cache',
-          '--disable-gpu-shader-disk-cache',
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-gpu',
-        ],
+        args: ['--no-sandbox'],
       });
       console.log('Step: Open new page');
       this.pageHeadless = await this.browserHeadless.newPage();
@@ -96,7 +77,7 @@ class Submission {
       return false;
     }
   };
-  
+
   /**
    * Executes your task, optionally storing the result.
    *
@@ -108,44 +89,53 @@ class Submission {
       console.log('ROUND', round);
       await this.negotiateHeadlessSession();
       const isLoggedIn = await this.checkLogin();
-      if(isLoggedIn){
-        console.log("Login Cookie Exists")
-        await namespaceWrapper.logMessage("warn", "Login Cookie Exists. You can start all the other Twitter Tasks.");
-      }else{
+      if (isLoggedIn) {
+        console.log('Login Cookie Exists');
+        await namespaceWrapper.logMessage(
+          'warn',
+          'Login successful. You can now start all the other Twitter tasks.',
+        );
+        await this.browserHeadless.close();
+      } else {
         await this.negotiateSession();
-        console.log("No Login Cookie ; Require Manual Login")
+        console.log('No Login Cookie ; Require Manual Login');
         const loginResult = await this.twitterLogin();
-        if(loginResult){
-          await namespaceWrapper.logMessage("warn", "You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.");
-        }else{
-          await namespaceWrapper.logMessage("warn", "The Login Failed! Contact Discord Support for more information!");
+        if (loginResult) {
+          await namespaceWrapper.logMessage(
+            'warn',
+            'You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.',
+          );
+        } else {
+          await namespaceWrapper.logMessage(
+            'warn',
+            'The Login Failed! Contact Discord Support for more information!',
+          );
         }
+        await this.browser.close();
       }
-      await this.browser.close();
+
       process.exit(1);
       // Optional, return your task
-    
     } catch (err) {
       console.log('ERROR IN EXECUTING TASK', err);
       return 'ERROR IN EXECUTING TASK' + err;
     }
   }
 
-
-  async checkLogin() {  
-
+  async checkLogin() {
     const newPage = await this.browserHeadless.newPage(); // Create a new page
     await newPage.goto('https://x.com/home');
     await newPage.waitForTimeout(5000);
     // Replace the selector with a Twitter-specific element that indicates a logged-in state
     const isLoggedIn =
-    (await newPage.url()) !==
-    'https://x.com/i/flow/login?redirect_after_login=%2Fhome' && !(await newPage.url()).includes("https://x.com/?logout=");  
+      (await newPage.url()) !==
+        'https://x.com/i/flow/login?redirect_after_login=%2Fhome' &&
+      !(await newPage.url()).includes('https://x.com/?logout=');
     let sessionValid = false;
     if (isLoggedIn) {
       console.log('Logged in using existing cookies');
       console.log('Updating last session check');
-      
+
       const cookies = await newPage.cookies();
       this.saveCookiesToDB(cookies);
 
@@ -156,94 +146,102 @@ class Submission {
     }
     await newPage.close();
     return sessionValid;
+  }
 
-  };
+  async redirectToTwitterLogin() {
+    console.log('Step: Redirect to Twitter login page');
+    console.log('User manuuly logging in.');
+    await this.page.goto('https://x.com/i/flow/login');
+    await this.page.evaluate(() => {
+      alert('Please login to Twitter manually');
+    });
 
+    // Wait for the page to navigate to "https://x.com/home"
+    await this.page.waitForFunction(
+      'window.location.href === "https://x.com/home"',
+      { timeout: 0 }, // Wait indefinitely until the condition is met
+    );
 
+    // Show another alert once the URL changes to "https://x.com/home"
+    await this.page.evaluate(() => {
+      alert('You have successfully logged in!');
+    });
+  }
 
+  async infoMessage() {
+    const page = await this.browser.newPage();
 
-async redirectToTwitterLogin() {
-  console.log('Step: Redirect to Twitter login page');
-  await this.page.goto('https://x.com/i/flow/login');
-
-  console.log('Please login to Twitter manually and press the confirm button when done.');
-}
-
-async infoMessage(){
-  const page = await this.browser.newPage();
-
-  await page.setContent(`
+    await page.setContent(`
     <html>
       <body>
         <div id="message"></div>
       </body>
     </html>
   `);
-  
-  await page.evaluate(() => {
-    const messageDiv = document.getElementById('message');
-    messageDiv.innerText = 'Please Login In Another Page, and DO NOT CLOSE this browser After You Logged In';
-    messageDiv.style.fontSize = '24px';
-    messageDiv.style.color = 'red';
-    messageDiv.style.textAlign = 'center';
-    messageDiv.style.marginTop = '20%';
-  });
 
-  console.log('Please Login In Another Page, and DO NOT CLOSE this browser After You Logged In');
-}
-
-
-
-async saveCookiesToDB (cookies) {
-  try {
-    const data = await this.db.getCookie();
-    // console.log('data', data);
-    if (data) {
-      await this.db.updateCookie({ id: 'cookies', data: cookies });
-    } else {
-      await this.db.createCookie({ id: 'cookies', data: cookies });
-    }
-  } catch (e) {
-    console.log('Error saving cookies to database', e);
-  }
-};
-
-async twitterLogin() {
-
-  try {
-    await this.redirectToTwitterLogin();
-    await this.infoMessage();
-
-    console.log('Before waiting for user login...');
-    await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        resolve();
-      }, 150000); 
-      this.page.on('close', () => {
-        clearTimeout(timeout);
-        reject(new Error('Browser was closed by user or system.'));
-      });
+    await page.evaluate(() => {
+      const messageDiv = document.getElementById('message');
+      messageDiv.innerText =
+        'Please Login In Another Page, and DO NOT CLOSE this browser After You Logged In';
+      messageDiv.style.fontSize = '24px';
+      messageDiv.style.color = 'red';
+      messageDiv.style.textAlign = 'center';
+      messageDiv.style.marginTop = '20%';
     });
-    console.log('After waiting for user login...');
 
-    // Extract cookies after user confirmation
-    const cookies = await this.page.cookies();
-
-    if (cookies && cookies.length > 0) {
-      console.log('Cookies retrieved successfully.');
-      await this.saveCookiesToDB(cookies);
-      this.sessionValid = true;
-      this.lastSessionCheck = Date.now();
-    } else {
-      console.log('No cookies retrieved. Please try again.');
-      this.sessionValid = false;
-    }
-    return this.sessionValid;
-  } catch (error) {
-    console.error('Error during Twitter login:', error);
+    console.log(
+      'Please Login In Another Page, and DO NOT CLOSE this browser After You Logged In',
+    );
   }
-}
 
+  async saveCookiesToDB(cookies) {
+    try {
+      const data = await this.db.getCookie();
+      // console.log('data', data);
+      if (data) {
+        await this.db.updateCookie({ id: 'cookies', data: cookies });
+      } else {
+        await this.db.createCookie({ id: 'cookies', data: cookies });
+      }
+    } catch (e) {
+      console.log('Error saving cookies to database', e);
+    }
+  }
+
+  async twitterLogin() {
+    try {
+      await this.redirectToTwitterLogin();
+      // await this.infoMessage();
+
+      // console.log('Before waiting for user login...');
+      // await new Promise((resolve, reject) => {
+      //   const timeout = setTimeout(() => {
+      //     resolve();
+      //   }, 150000);
+      //   this.page.on('close', () => {
+      //     clearTimeout(timeout);
+      //     reject(new Error('Browser was closed by user or system.'));
+      //   });
+      // });
+      console.log('After waiting for user login...');
+
+      // Extract cookies after user confirmation
+      const cookies = await this.page.cookies();
+
+      if (cookies && cookies.length > 0) {
+        console.log('Cookies retrieved successfully.');
+        await this.saveCookiesToDB(cookies);
+        this.sessionValid = true;
+        this.lastSessionCheck = Date.now();
+      } else {
+        console.log('No cookies retrieved. Please try again.');
+        this.sessionValid = false;
+      }
+      return this.sessionValid;
+    } catch (error) {
+      console.error('Error during Twitter login:', error);
+    }
+  }
 
   /**
    * Submits a task for a given round
@@ -254,7 +252,7 @@ async twitterLogin() {
   async submitTask(round) {
     console.log('SUBMIT TASK CALLED ROUND NUMBER', round);
     try {
-      console.log("No Submission Required");
+      console.log('No Submission Required');
       return true;
     } catch (error) {
       console.log('ERROR IN SUBMISSION', error);

@@ -12,6 +12,6 @@ config/*
 .env
 taskStateInfoKeypair.json
 localKOIIDB.db
-task/puppeteer_cache_*/
+task/puppeteer_cache*/
 Twitter_Login/
 metadata.json
