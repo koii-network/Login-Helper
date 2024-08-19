@@ -114,7 +114,7 @@ class Submission {
         await this.browser.close();
       }
 
-      process.exit(1);
+      process.exit(0);
       // Optional, return your task
     } catch (err) {
       console.log('ERROR IN EXECUTING TASK', err);
