@@ -3,6 +3,8 @@ const readline = require('readline');
 const PCR = require('puppeteer-chromium-resolver');
 const path = require('path');
 const Data = require('../helper/data');
+const dotenv = require('dotenv');
+dotenv.config();
 
 class Submission {
   constructor() {
@@ -11,7 +13,19 @@ class Submission {
     this.w3sKey = null;
     this.db = new Data('db', []);
     this.db.initializeData();
+    this.username = process.env.TWITTER_USERNAME;
+    this.password = process.env.TWITTER_PASSWORD;
+    this.credentials = process.env.TWITTER_PHONE;
   }
+
+  randomDelay = async delayTime => {
+    const delay =
+      Math.floor(Math.random() * (delayTime - 2000 + 1)) + (delayTime - 2000);
+    // console.log('Delaying for', delay, 'ms');
+    return delay;
+  };
+
+
   negotiateSession = async () => {
     try {
       if (this.browser) {
@@ -27,7 +41,7 @@ class Submission {
       this.browser = await stats.puppeteer.launch({
         executablePath: stats.executablePath,
         userDataDir: userDataDir,
-        headless: false,
+        // headless: false,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         args: ['--no-sandbox'],
@@ -60,7 +74,7 @@ class Submission {
       this.browserHeadless = await stats.puppeteer.launch({
         executablePath: stats.executablePath,
         userDataDir: userDataDir,
-        //headless: false,
+        // headless: false,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         args: ['--no-sandbox'],
@@ -88,12 +102,12 @@ class Submission {
     try {
       console.log('ROUND', round);
       await this.negotiateHeadlessSession();
-      const isLoggedIn = await this.checkLogin();
+      const isLoggedIn = await this.checkLogin(this.browserHeadless);
       if (isLoggedIn) {
         console.log('Login Cookie Exists');
         await namespaceWrapper.logMessage(
           'warn',
-          'Login successful. You can now start all the other Twitter tasks.',
+          'Login successful. You can now start all the other Twitter tasks.'
         );
         await this.browserHeadless.close();
       } else {
@@ -103,7 +117,7 @@ class Submission {
         if (loginResult) {
           await namespaceWrapper.logMessage(
             'warn',
-            'You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.',
+            'You are successfully Logged In. Now this login Task will Stop, you can start all the other Twitter Tasks.'
           );
         } else {
           await namespaceWrapper.logMessage(
@@ -111,10 +125,10 @@ class Submission {
             'The Login Failed! Contact Discord Support for more information!',
           );
         }
-        await this.browser.close();
+        console.log('Closing Browser');
+        // await this.browser.close();
       }
-
-      process.exit(1);
+      process.exit(0);
       // Optional, return your task
     } catch (err) {
       console.log('ERROR IN EXECUTING TASK', err);
@@ -122,10 +136,10 @@ class Submission {
     }
   }
 
-  async checkLogin() {
-    const newPage = await this.browserHeadless.newPage(); // Create a new page
-    await newPage.goto('https://x.com/home');
+  async checkLogin(browser) {
+    const newPage = await browser.newPage(); // Create a new page
     await newPage.waitForTimeout(5000);
+    await newPage.goto('https://x.com/home');
     // Replace the selector with a Twitter-specific element that indicates a logged-in state
     const isLoggedIn =
       (await newPage.url()) !==
@@ -210,32 +224,75 @@ class Submission {
 
   async twitterLogin() {
     try {
-      await this.redirectToTwitterLogin();
-      // await this.infoMessage();
+      console.log('Step: Go to login page');
+      await this.page.goto('https://x.com/i/flow/login', {
+        timeout: await this.randomDelay(60000),
+        waitUntil: 'networkidle0',
+      });
+      await this.page.waitForSelector('input', {
+        timeout: await this.randomDelay(60000),
+      });
+      await this.page.waitForSelector('input[name="text"]', {
+        timeout: await this.randomDelay(60000),
+      });
 
-      // console.log('Before waiting for user login...');
-      // await new Promise((resolve, reject) => {
-      //   const timeout = setTimeout(() => {
-      //     resolve();
-      //   }, 150000);
-      //   this.page.on('close', () => {
-      //     clearTimeout(timeout);
-      //     reject(new Error('Browser was closed by user or system.'));
-      //   });
-      // });
-      console.log('After waiting for user login...');
+      console.log('Step: Fill in username');
+      await this.page.type('input[name="text"]', this.username);
+      await this.page.keyboard.press('Enter');
+      await new Promise(resolve => setTimeout(resolve, 10000));
 
-      // Extract cookies after user confirmation
-      const cookies = await this.page.cookies();
+      const twitter_verify = await this.page
+        .waitForSelector('input[data-testid="ocfEnterTextTextInput"]', {
+          timeout: await this.randomDelay(5000),
+          visible: true,
+        })
+        .then(() => true)
+        .catch(() => false);
 
-      if (cookies && cookies.length > 0) {
-        console.log('Cookies retrieved successfully.');
-        await this.saveCookiesToDB(cookies);
-        this.sessionValid = true;
-        this.lastSessionCheck = Date.now();
-      } else {
-        console.log('No cookies retrieved. Please try again.');
+      if (twitter_verify) {
+        const verifyURL = await this.page.url();
+        console.log('Twitter verify needed, trying phone number');
+        console.log('Step: Fill in phone number');
+        await this.page.type(
+          'input[data-testid="ocfEnterTextTextInput"]',
+          this.credentials.phone,
+        );
+        await this.page.keyboard.press('Enter');
+
+        // add delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+
+      await this.page.waitForSelector('input[name="password"]');
+      console.log('Step: Fill in password');
+      await this.page.type('input[name="password"]', this.password);
+      console.log('Step: Click login button');
+      await this.page.keyboard.press('Enter');
+      await this.page.waitForTimeout(await this.randomDelay(5000));
+
+      if (!(await this.checkLogin(this.browser))) {
+        console.log('Password is incorrect or email verification needed.');
+        await this.page.waitForTimeout(await this.randomDelay(5000));
         this.sessionValid = false;
+      } else {
+        console.log('Password is correct.');
+        this.page.waitForNavigation({ waitUntil: 'load' });
+        await this.page.waitForTimeout(await this.randomDelay(10000));
+        this.sessionValid = true;
+
+        console.log('Step: Login successful');
+        // Extract cookies after user confirmation
+        const cookies = await this.page.cookies();
+
+        if (cookies && cookies.length > 0) {
+          console.log('Cookies retrieved successfully.');
+          await this.saveCookiesToDB(cookies);
+          this.sessionValid = true;
+          this.lastSessionCheck = Date.now();
+        } else {
+          console.log('No cookies retrieved. Please try again.');
+          this.sessionValid = false;
+        }
       }
       return this.sessionValid;
     } catch (error) {
