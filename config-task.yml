@@ -1,7 +1,7 @@
 # Name and metadata of your task
 task_name: 'Twitter Login Helper'
 author: 'Koii'
-description: 'This task will help you to login to your Twitter account. Please run this task before running any other task that requires Twitter login.'
+description: 'This task will help you to login to your Twitter account. Please run this task before running any other task that requires Twitter login. If this task doesn't work, please run the one for VPS as the backup tool. '
 repositoryUrl: 'https://github.com/koii-network/task-template' #replace with your own repo url
 imageUrl: 'imageUrl'
 
