@@ -1,5 +1,4 @@
 const { namespaceWrapper } = require('@_koii/namespace-wrapper');
-const readline = require('readline');
 const PCR = require('puppeteer-chromium-resolver');
 const path = require('path');
 const Data = require('../helper/data');
