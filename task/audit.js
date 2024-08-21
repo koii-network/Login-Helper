@@ -1,5 +1,4 @@
 const { namespaceWrapper } = require('@_koii/namespace-wrapper');
-const { validate } = require('webpack');
 
 class Audit {
   /**
