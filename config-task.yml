@@ -26,10 +26,10 @@ total_bounty_amount: 10
 bounty_amount_per_round: 0.01
 
 # allowed_failed_distributions: Number of times re-submission is allowed for the distribution list in case of an audit.
-allowed_failed_distributions: 3
+allowed_failed_distributions: 1
 
 # space: Space in MBs for the account size, that holds the task data.
-space: 1
+space: 0.1
 
 # Note that the value field in RequirementTag is optional, so it is up to you to include it or not based on your use case.
 # To add more global variables and task variables, please refer the type,value, description format shown below
