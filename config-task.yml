@@ -1,5 +1,5 @@
 # Name and metadata of your task
-task_name: 'VPS Twitter Login'
+task_name: 'Twitter Login Helper'
 author: 'Koii'
 description: 'This task will help you to login to your Twitter account. Please run this task before running any other task that requires Twitter login. Please use your username and password to login.'
 repositoryUrl: 'https://github.com/koii-network/task-template' #replace with your own repo url
@@ -26,10 +26,10 @@ total_bounty_amount: 10
 bounty_amount_per_round: 0.01
 
 # allowed_failed_distributions: Number of times re-submission is allowed for the distribution list in case of an audit.
-allowed_failed_distributions: 3
+allowed_failed_distributions: 1
 
 # space: Space in MBs for the account size, that holds the task data.
-space: 1
+space: 0.1
 
 # Note that the value field in RequirementTag is optional, so it is up to you to include it or not based on your use case.
 # To add more global variables and task variables, please refer the type,value, description format shown below
@@ -55,7 +55,7 @@ requirementsTags:
 
 # ONLY provide the task_id and migrationDescription if you are updating the task otherwise leave blank
 # task_id: Previous task id
-task_id: ''
+task_id: 'pFTaEuQ8nUzT28i6m9TeFgihMa3rXpdUmaWeXhDgcsW'
 
 # migrationDescription: Provide the description for changes made in new version of task
-migrationDescription: ''
+migrationDescription: 'Updated'
