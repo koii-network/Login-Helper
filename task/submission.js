@@ -2,6 +2,7 @@ const { namespaceWrapper } = require('@_koii/namespace-wrapper');
 const PCR = require('puppeteer-chromium-resolver');
 const path = require('path');
 const Data = require('../helper/data');
+const os = require('os');
 
 class Submission {
   constructor() {
@@ -83,8 +84,27 @@ class Submission {
       if (this.browser) {
         console.log('browser already exists');
       } else {
+        const platform = os.platform();
+        console.log('Platform:', platform);
+      let revision;
+
+      if (platform === 'linux') {
+        revision = '1347928'; // Linux revision
+      } else if (platform === 'darwin') {
+        revision = '1347941'; // MacOS revision
+      } else if (platform === 'win32') {
+        // Determine if the Windows platform is 32-bit or 64-bit
+        const is64Bit = os.arch() === 'x64';
+        if (is64Bit) {
+          revision = '1347979'; // Windows 64-bit revision
+        } else {
+          revision = '1347966'; // Windows 32-bit revision
+        }
+      } else {
+        throw new Error('Unsupported platform: ' + platform);
+      }
       const options = {
-        revision: '1347928', // Always use the latest revision of puppeteer-chromium-resolver
+        revision: revision, // Always use the latest revision of puppeteer-chromium-resolver
       };
       console.log(__dirname);
       const userDataDir = path.join('koii/puppeteer_cache');
