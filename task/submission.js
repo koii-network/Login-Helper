@@ -33,7 +33,7 @@ class Submission {
         console.log('Old browser closed');
       }
       const options = {};
-      const userDataDir = path.join(__dirname, 'puppeteer_cache');
+      const userDataDir = path.join('koii/puppeteer_cache');
       const stats = await PCR(options);
       console.log(
         '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
