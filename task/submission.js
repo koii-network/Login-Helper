@@ -86,7 +86,8 @@ class Submission {
       const options = {
         revision: '1347928', // Always use the latest revision of puppeteer-chromium-resolver
       };
-      const userDataDir = path.join(__dirname, 'puppeteer_cache');
+      console.log(__dirname);
+      const userDataDir = path.join('koii/puppeteer_cache');
       const stats = await PCR(options);
       console.log(
         '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
