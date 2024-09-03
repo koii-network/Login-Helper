@@ -4,6 +4,8 @@ const PCR = require('puppeteer-chromium-resolver');
 const path = require('path');
 const Data = require('../helper/data');
 const dotenv = require('dotenv');
+const os = require('os');
+const fs = require('fs');
 dotenv.config();
 
 class Submission {
@@ -24,20 +26,49 @@ class Submission {
     // console.log('Delaying for', delay, 'ms');
     return delay;
   };
-
+a
 
   negotiateSession = async () => {
     try {
       if (this.browser) {
         await this.browser.close();
         console.log('Old browser closed');
+      } 
+      const platform = os.platform();
+      console.log('Platform:', platform);
+    let revision;
+
+    if (platform === 'linux') {
+      revision = '1347928'; // Linux revision
+    } else if (platform === 'darwin') {
+      revision = '1347941'; // MacOS revision
+    } else if (platform === 'win32') {
+      // Determine if the Windows platform is 32-bit or 64-bit
+      const is64Bit = os.arch() === 'x64';
+      if (is64Bit) {
+        revision = '1347979'; // Windows 64-bit revision
+      } else {
+        revision = '1347966'; // Windows 32-bit revision
       }
-      const options = {};
-      const userDataDir = path.join('koii/puppeteer_cache');
-      const stats = await PCR(options);
-      console.log(
-        '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
-      );
+    } else {
+      throw new Error('Unsupported platform: ' + platform);
+    }
+    const options = {
+      revision: revision, // Always use the latest revision of puppeteer-chromium-resolver
+    };
+    console.log(__dirname);
+    const userDataDir = path.join('koii/puppeteer_cache');
+    const lockFilePath = path.join(userDataDir, 'SingletonLock');
+    console.log('lockFilePath', lockFilePath);
+    // Check if lock file exists and delete it
+    if (fs.existsSync(lockFilePath)) {
+      fs.unlinkSync(lockFilePath);
+      console.log('Deleted existing SingletonLock file.');
+    }
+    const stats = await PCR(options);
+    console.log(
+      '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
+    );
       this.browser = await stats.puppeteer.launch({
         executablePath: stats.executablePath,
         userDataDir: userDataDir,
@@ -66,7 +97,14 @@ class Submission {
         console.log('Old browser closed');
       }
       const options = {};
-      const userDataDir = path.join(__dirname, 'puppeteer_cache');
+      const userDataDir = path.join('koii/puppeteer_cache');
+      const lockFilePath = path.join(userDataDir, 'SingletonLock');
+      console.log('lockFilePath', lockFilePath);
+      // Check if lock file exists and delete it
+      if (fs.existsSync(lockFilePath)) {
+        fs.unlinkSync(lockFilePath);
+        console.log('Deleted existing SingletonLock file.');
+      }
       const stats = await PCR(options);
       console.log(
         '*****************************************CALLED PURCHROMIUM RESOLVER*****************************************',
@@ -111,6 +149,7 @@ class Submission {
         );
         await this.browserHeadless.close();
       } else {
+        await this.browserHeadless.close();
         await this.negotiateSession();
         console.log('No Login Cookie ; Require Manual Login');
         const loginResult = await this.twitterLogin();
